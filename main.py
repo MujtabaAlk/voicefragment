@@ -9,9 +9,13 @@ import discord
 from discord.ext import commands
 from dotenv import load_dotenv
 
+from channel_cog import ChannelCog
+
 
 def create_bot() -> commands.Bot:
     guild_name = os.getenv('GUILD_NAME')
+    text_category_id = 720722777803456515
+    voice_category_id = 720722778243989504
     help_command = commands.DefaultHelpCommand(no_category='Global Commands')
     intents: discord.Intents = discord.Intents.default()
     intents.members = True
@@ -26,6 +30,9 @@ def create_bot() -> commands.Bot:
         print(f'{client.user.name} has connected to Discord!')
         if guild is not None:
             print(f'Bot is connected to server "{guild.name}".')
+
+    # add the channel cog
+    client.add_cog(ChannelCog(client, text_category_id, voice_category_id))
 
     return client
 
