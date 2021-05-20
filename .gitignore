@@ -132,6 +132,9 @@ dmypy.json
 .vscode/
 .idea/
 
+# Local Databases
+*.db
+
 # Vagrant
 .vagrant/
 
