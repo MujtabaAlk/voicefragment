@@ -23,6 +23,7 @@ def create_bot() -> commands.Bot:
     help_command = commands.DefaultHelpCommand(no_category='Global Commands')
     intents: discord.Intents = discord.Intents.default()
     intents.members = True
+    intents.voice_states = True
     client: commands.Bot = commands.Bot(command_prefix='!',
                                         help_command=help_command,
                                         intents=intents)
