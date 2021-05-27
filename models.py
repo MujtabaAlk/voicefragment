@@ -33,18 +33,23 @@ class ChannelCategory(BaseModel):
         table_name = 'channel_category'
 
 
-class ChannelType(BaseModel):
-    id = AutoField()
-    name = CharField()
-
-    class Meta:
-        table_name = 'channel_type'
-
-
-class Channel(BaseModel):
+class VoiceChannel(BaseModel):
     id = AutoField()
     discord_id = IntegerField(unique=True)
     name = CharField()
-    type = ForeignKeyField(ChannelType, backref='channels')
-    guild = ForeignKeyField(Guild, backref='channels')
-    category = ForeignKeyField(ChannelCategory, backref='channels')
+    guild = ForeignKeyField(Guild, backref='voice_channels')
+    category = ForeignKeyField(ChannelCategory, backref='voice_channels')
+
+    class Meta:
+        table_name = 'voice_channel'
+
+
+class TextChannel(BaseModel):
+    id = AutoField()
+    discord_id = IntegerField(unique=True)
+    name = CharField()
+    guild = ForeignKeyField(Guild, backref='text_channel')
+    category = ForeignKeyField(ChannelCategory, backref='text_channel')
+
+    class Meta:
+        table_name = 'text_channel'

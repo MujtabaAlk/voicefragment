@@ -10,7 +10,7 @@ from discord.ext import commands
 from dotenv import load_dotenv
 
 from channel_cog import ChannelCog
-from models import database, Guild, Channel, ChannelCategory, ChannelType
+from models import database, Guild, ChannelCategory, VoiceChannel, TextChannel
 
 
 def create_bot() -> commands.Bot:
@@ -41,8 +41,6 @@ def create_bot() -> commands.Bot:
     async def initialize(ctx: commands.Context):
         print(f'permissions: {ctx.author.permissions_in(ctx.channel)}')
         setup_message: discord.Message = await ctx.send('initializing bot in server...')
-        text_channel_type_db = ChannelType.get_by_id(1)
-        voice_channel_type_db = ChannelType.get_by_id(2)
         guild: discord.Guild = ctx.guild
         print(f'Guild: {guild}')
 
@@ -67,9 +65,9 @@ def create_bot() -> commands.Bot:
                 for channel in text_channels:
                     print(f'\t\t\tChannel: {channel}')
                     # get text channel object from database if it exists otherwise insert into database
-                    channel_db: Channel
-                    channel_db, _ = Channel.get_or_create(discord_id=channel.id, defaults=dict(
-                        name=channel.name, type=text_channel_type_db, guild=guild_db, category=category_db))
+                    channel_db: TextChannel
+                    channel_db, _ = TextChannel.get_or_create(discord_id=channel.id, defaults=dict(
+                        name=channel.name, guild=guild_db, category=category_db))
                     print(f'\t\t\tChannel db: {channel_db}')
 
             voice_channels: list[discord.VoiceChannel] = category.voice_channels
@@ -78,12 +76,13 @@ def create_bot() -> commands.Bot:
                 for channel in voice_channels:
                     print(f'\t\t\tChannel: {channel}')
                     # get voice channel object from database if it exists otherwise insert into database
-                    channel_db: Channel
-                    channel_db, _ = Channel.get_or_create(discord_id=channel.id, defaults=dict(
-                        name=channel.name, type=voice_channel_type_db, guild=guild_db, category=category_db))
+                    channel_db: VoiceChannel
+                    channel_db, _ = VoiceChannel.get_or_create(discord_id=channel.id, defaults=dict(
+                        name=channel.name, guild=guild_db, category=category_db))
                     print(f'\t\t\tChannel db: {channel_db}')
 
         await setup_message.delete(delay=5)
+        await ctx.send('Finished Initializing to Server', delete_after=5)
         await ctx.message.delete(delay=5)
 
     # add the channel cog

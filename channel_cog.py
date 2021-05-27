@@ -6,7 +6,7 @@ import asyncio
 import discord
 from discord.ext import commands
 
-from models import Channel, Guild, ChannelCategory
+from models import Guild, ChannelCategory, VoiceChannel, TextChannel
 
 
 class ChannelCog(commands.Cog, name='Channel Commands'):
@@ -47,9 +47,9 @@ class ChannelCog(commands.Cog, name='Channel Commands'):
         if guild_db is None or category_db is None:
             await ctx.send('you must initialize bot in the server first')
             return
-        channel_db: Channel
-        channel_db, created = Channel.get_or_create(discord_id=channel.id, defaults=dict(
-                        name=channel.name, type=2, guild=guild_db, category=category_db))
+        channel_db: VoiceChannel
+        channel_db, created = VoiceChannel.get_or_create(discord_id=channel.id, defaults=dict(
+                        name=channel.name, guild=guild_db, category=category_db))
         if created:
             await ctx.send('Channel added to db', delete_after=15)
             await ctx.message.delete(delay=15)
@@ -75,7 +75,7 @@ class ChannelCog(commands.Cog, name='Channel Commands'):
                 print('Entered AFK Channel!')
                 return
             print(f'Connected to voice Channel: {after.channel}')
-            channel_db: Channel = Channel.get_or_none(discord_id=after.channel.id)
+            channel_db: VoiceChannel = VoiceChannel.get_or_none(discord_id=after.channel.id)
             if channel_db is not None:
                 print(f'Channel is in the database: {channel_db}')
                 guild: discord.Guild = after.channel.guild
