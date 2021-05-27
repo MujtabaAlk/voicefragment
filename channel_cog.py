@@ -14,30 +14,8 @@ class ChannelCog(commands.Cog, name='Channel Commands'):
                                manage_messages=True,
                                move_members=True)
 
-    def __init__(self, bot: commands.Bot, text_category: int, voice_category: int):
+    def __init__(self, bot: commands.Bot):
         self.bot = bot
-        self.text_category = text_category
-        self.voice_category = voice_category
-
-    @commands.command(help='Create a new text channel')
-    async def new_text(self, ctx: commands.Context, channel_name: str):
-        """Create a new text function in the category given when bot is initialized"""
-        guild: discord.Guild = ctx.guild
-        category: discord.CategoryChannel = discord.utils.get(guild.categories, id=self.text_category)
-        new_channel: discord.TextChannel = await guild.create_text_channel(channel_name, category=category)
-
-        response = f'The text channel {new_channel.mention}\t was created'
-        await ctx.send(response)
-
-    @commands.command(help='Create a new voice channel')
-    async def new_voice(self, ctx: commands.Context, channel_name: str):
-        """Create a new voice function in the category given when bot is initialized"""
-        guild: discord.Guild = ctx.guild
-        category: discord.CategoryChannel = discord.utils.get(guild.categories, id=self.voice_category)
-        new_channel: discord.VoiceChannel = await guild.create_voice_channel(channel_name, category=category)
-
-        response = f'The voice channel {new_channel.mention}\t was created'
-        await ctx.send(response)
 
     @commands.command(help='Add voice channel to the database')
     @commands.has_guild_permissions(**command_permissions)
@@ -49,6 +27,24 @@ class ChannelCog(commands.Cog, name='Channel Commands'):
             return
         channel_db: VoiceChannel
         channel_db, created = VoiceChannel.get_or_create(discord_id=channel.id, defaults=dict(
+            name=channel.name, guild=guild_db, category=category_db))
+        if created:
+            await ctx.send('Channel added to db', delete_after=15)
+            await ctx.message.delete(delay=15)
+        else:
+            await ctx.send('Channel already in db', delete_after=15)
+            await ctx.message.delete(delay=15)
+
+    @commands.command(help='Add text channel to the database')
+    @commands.has_guild_permissions(**command_permissions)
+    async def add_text(self, ctx: commands.Context, channel: discord.VoiceChannel):
+        guild_db: Guild = Guild.get_or_none(discord_id=ctx.guild.id)
+        category_db: ChannelCategory = ChannelCategory.get_or_none(discord_id=channel.category_id)
+        if guild_db is None or category_db is None:
+            await ctx.send('you must initialize bot in the server first')
+            return
+        channel_db: TextChannel
+        channel_db, created = TextChannel.get_or_create(discord_id=channel.id, defaults=dict(
                         name=channel.name, guild=guild_db, category=category_db))
         if created:
             await ctx.send('Channel added to db', delete_after=15)

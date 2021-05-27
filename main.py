@@ -15,8 +15,6 @@ from models import database, Guild, ChannelCategory, VoiceChannel, TextChannel
 
 def create_bot() -> commands.Bot:
     guild_name = os.getenv('GUILD_NAME')
-    text_category_id = 720722777803456515
-    voice_category_id = 720722778243989504
     command_permissions = dict(manage_channels=True,
                                manage_messages=True,
                                move_members=True)
@@ -86,7 +84,7 @@ def create_bot() -> commands.Bot:
         await ctx.message.delete(delay=5)
 
     # add the channel cog
-    client.add_cog(ChannelCog(client, text_category_id, voice_category_id))
+    client.add_cog(ChannelCog(client))
 
     return client
 
