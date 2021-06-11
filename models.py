@@ -3,7 +3,7 @@ This module contains the data models for the system.
 """
 import os
 
-from peewee import *
+from peewee import Model, AutoField, IntegerField, CharField, ForeignKeyField
 from playhouse.db_url import connect
 from dotenv import load_dotenv
 
@@ -13,17 +13,26 @@ database = connect(os.getenv('DATABASE') or 'sqlite:///discord.db')
 
 
 class BaseModel(Model):
+    """
+    The base model class.
+    """
     class Meta:
         database = database
 
 
 class Guild(BaseModel):
+    """
+    A class representing a Discord guild/server.
+    """
     id = AutoField()
     discord_id = IntegerField(unique=True)
     name = CharField()
 
 
 class ChannelCategory(BaseModel):
+    """
+    A class representing a Discord channel category.
+    """
     id = AutoField()
     discord_id = IntegerField(unique=True)
     name = CharField()
@@ -34,6 +43,9 @@ class ChannelCategory(BaseModel):
 
 
 class VoiceChannel(BaseModel):
+    """
+    A class representing a Discord voice channel.
+    """
     id = AutoField()
     discord_id = IntegerField(unique=True)
     name = CharField()
@@ -45,6 +57,9 @@ class VoiceChannel(BaseModel):
 
 
 class TextChannel(BaseModel):
+    """
+    A class representing a Discord text channel.
+    """
     id = AutoField()
     discord_id = IntegerField(unique=True)
     name = CharField()

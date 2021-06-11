@@ -10,10 +10,14 @@ from discord.ext import commands
 from dotenv import load_dotenv
 
 from channel_cog import ChannelCog
-from models import database, Guild, ChannelCategory, VoiceChannel, TextChannel
+from models import Guild, ChannelCategory, VoiceChannel, TextChannel
 
 
 def create_bot() -> commands.Bot:
+    """
+    Create an instance of the bot and adds commands and Cogs
+    :return: The created Discord bot instance
+    """
     guild_name = os.getenv('GUILD_NAME')
     command_permissions = dict(manage_channels=True,
                                manage_messages=True,
@@ -63,10 +67,10 @@ def create_bot() -> commands.Bot:
                 for channel in text_channels:
                     print(f'\t\t\tChannel: {channel}')
                     # get text channel object from database if it exists otherwise insert into database
-                    channel_db: TextChannel
-                    channel_db, _ = TextChannel.get_or_create(discord_id=channel.id, defaults=dict(
+                    text_channel_db: TextChannel
+                    text_channel_db, _ = TextChannel.get_or_create(discord_id=channel.id, defaults=dict(
                         name=channel.name, guild=guild_db, category=category_db))
-                    print(f'\t\t\tChannel db: {channel_db}')
+                    print(f'\t\t\tChannel db: {text_channel_db}')
 
             voice_channels: list[discord.VoiceChannel] = category.voice_channels
             if len(voice_channels) > 0:
@@ -74,10 +78,10 @@ def create_bot() -> commands.Bot:
                 for channel in voice_channels:
                     print(f'\t\t\tChannel: {channel}')
                     # get voice channel object from database if it exists otherwise insert into database
-                    channel_db: VoiceChannel
-                    channel_db, _ = VoiceChannel.get_or_create(discord_id=channel.id, defaults=dict(
+                    voice_channel_db: VoiceChannel
+                    voice_channel_db, _ = VoiceChannel.get_or_create(discord_id=channel.id, defaults=dict(
                         name=channel.name, guild=guild_db, category=category_db))
-                    print(f'\t\t\tChannel db: {channel_db}')
+                    print(f'\t\t\tChannel db: {voice_channel_db}')
 
         await setup_message.delete(delay=5)
         await ctx.send('Finished Initializing to Server', delete_after=5)
@@ -90,6 +94,9 @@ def create_bot() -> commands.Bot:
 
 
 def main():
+    """
+    Main function of module.
+    """
     bot = create_bot()
     token = os.getenv('DISCORD_TOKEN')
     bot.run(token)
