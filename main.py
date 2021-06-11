@@ -19,13 +19,12 @@ def create_bot() -> commands.Bot:
     :return: The created Discord bot instance
     """
     guild_name = os.getenv('GUILD_NAME')
-    command_permissions = dict(manage_channels=True,
+    command_permissions = dict(manage_guild=True,
+                               manage_channels=True,
                                manage_messages=True,
                                move_members=True)
     help_command = commands.DefaultHelpCommand(no_category='Global Commands')
-    intents: discord.Intents = discord.Intents.default()
-    intents.members = True
-    intents.voice_states = True
+    intents: discord.Intents = discord.Intents(voice_states=True, messages=True, guilds=True)
     client: commands.Bot = commands.Bot(command_prefix='!',
                                         help_command=help_command,
                                         intents=intents)
