@@ -104,19 +104,6 @@ class ChannelCog(commands.Cog, name='Channel Commands'):
         await ctx.send(f'Category {category.mention} added to db', delete_after=self.message_delete_delay)
         await ctx.message.delete(delay=self.message_delete_delay)
 
-    @commands.command(help='Change voice channel limit')
-    async def voice_limit(self, ctx: commands.Context, channel: discord.VoiceChannel, limit: int):
-        """
-        Changes the user limit of the given voice channel
-        :param ctx: the command context
-        :param channel: target voice channel
-        :param limit: new channel user limit
-        """
-        print(f'Changing {channel.name} limit to from: {channel.user_limit}, to: {limit}')
-        await channel.edit(user_limit=limit)
-        print(f'new limit: {channel.user_limit}')
-        await ctx.send(f'{channel.mention} limit changed to {limit if limit > 0 else "no limit"}')
-
     @commands.Cog.listener()
     async def on_voice_state_update(self, member: discord.Member,
                                     before: discord.VoiceState,
@@ -168,6 +155,41 @@ class ChannelCog(commands.Cog, name='Channel Commands'):
         else:
             print('Disconnected from voice channels')
 
+    @commands.command(help='Change voice channel limit')
+    async def voice_limit(self, ctx: commands.Context, limit: int):
+        """
+        Changes the user limit of the voice channel owned by the member
+        :param ctx: the command context
+        :param limit: new channel user limit
+        """
+        channel: discord.VoiceChannel = await _check_member_owns_channel(ctx)
+        if channel is None:
+            return
+
+        print(f'Changing {channel.name} limit to from: {channel.user_limit}, to: {limit}')
+        await channel.edit(user_limit=limit)
+        print(f'new limit: {channel.user_limit}')
+        await ctx.send(f'{channel.mention} limit changed to {limit if limit > 0 else "no limit"}',
+                       delete_after=self.message_delete_delay)
+        await ctx.message.delete(delay=self.message_delete_delay)
+
+    @commands.command(help='Change voice channel name')
+    async def voice_name(self, ctx: commands.Context, new_name: str):
+        """
+        Changes the name of the voice channel owned by the member
+        :param ctx: the command context
+        :param new_name: new channel name
+        """
+        channel: discord.VoiceChannel = await _check_member_owns_channel(ctx)
+        if channel is None:
+            return
+
+        print(f'Changing {channel.name} name to: {new_name}')
+        await channel.edit(name=new_name)
+        print(f'new name: {channel.name}')
+        await ctx.send(f'{channel.mention} name changed', delete_after=self.message_delete_delay)
+        await ctx.message.delete(delay=self.message_delete_delay)
+
 
 def _get_guild_and_category_db_or_false(guild: discord.Guild, category: discord.CategoryChannel) \
         -> (Guild, ChannelCategory, bool):
@@ -188,3 +210,22 @@ def _get_guild_and_category_db_or_false(guild: discord.Guild, category: discord.
     category_db: ChannelCategory
 
     return guild_db, category_db, True
+
+
+async def _check_member_owns_channel(ctx: commands.Context):
+    channel_owner_db: ChannelOwner = ChannelOwner.get_or_none(discord_id=ctx.author.id)
+    if channel_owner_db is None:
+        print('no entry for member in database.')
+        await ctx.send(f'You do not control a channel.', delete_after=ChannelCog.message_delete_delay)
+        await ctx.message.delete(delay=ChannelCog.message_delete_delay)
+        return None
+
+    owned_voice_channel: discord.VoiceChannel = discord.utils.find(lambda c: c.id == channel_owner_db.channel_id,
+                                                                   ctx.guild.voice_channels)
+    if owned_voice_channel is None:
+        print('Channel not found in guild.')
+        await ctx.send(f'You do not control a channel.', delete_after=ChannelCog.message_delete_delay)
+        await ctx.message.delete(delay=ChannelCog.message_delete_delay)
+        return None
+
+    return owned_voice_channel
