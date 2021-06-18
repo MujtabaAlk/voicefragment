@@ -6,7 +6,7 @@ import asyncio
 import discord
 from discord.ext import commands
 
-from models import Guild, ChannelCategory, VoiceChannel, TextChannel
+from models import Guild, ChannelCategory, VoiceChannel, TextChannel, ChannelOwner
 
 
 class ChannelCog(commands.Cog, name='Channel Commands'):
@@ -144,12 +144,22 @@ class ChannelCog(commands.Cog, name='Channel Commands'):
                 temp_voice_channel: discord.VoiceChannel = await guild.create_voice_channel(name=temp_channel_name,
                                                                                             category=category)
                 await member.move_to(temp_voice_channel)
+                channel_owner_db: ChannelOwner = ChannelOwner.create(discord_id=member.id,
+                                                                     channel_id=temp_voice_channel.id)
 
                 def wait_to_empty(m, b, a):
-                    return len(temp_voice_channel.members) == 0
+                    if len(temp_voice_channel.members) == 0:
+                        return True
+                    if m.id == member.id and a.channel != temp_voice_channel:
+                        new_owner: discord.Member = temp_voice_channel.members[0]
+                        channel_owner_db.discord_id = new_owner.id
+                        channel_owner_db.save()
+
+                    return False
 
                 await self.bot.wait_for('voice_state_update', check=wait_to_empty)
                 await temp_voice_channel.delete()
+                channel_owner_db.delete_instance()
                 await asyncio.sleep(5)
                 print('Channel Deleted...')
 

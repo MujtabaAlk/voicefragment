@@ -68,3 +68,15 @@ class TextChannel(BaseModel):
 
     class Meta:
         table_name = 'text_channel'
+
+
+class ChannelOwner(BaseModel):
+    """
+    A class representing a Discord member and the channel they own.
+    """
+    id = AutoField()
+    discord_id = IntegerField(unique=True)
+    channel_id = IntegerField(unique=True)
+
+    class Meta:
+        table_name = "channel_owner"
