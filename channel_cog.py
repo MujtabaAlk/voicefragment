@@ -44,6 +44,26 @@ class ChannelCog(commands.Cog, name='Channel Commands'):
             await ctx.send('Channel already in db', delete_after=self.message_delete_delay)
             await ctx.message.delete(delay=self.message_delete_delay)
 
+    @commands.command(aliases=['delete_voice'], help='Remove a voice channel from the database')
+    @commands.has_guild_permissions(**command_permissions)
+    async def remove_voice(self, ctx: commands.Context, channel: discord.VoiceChannel):
+        """
+        Remove the voice channel from the database disabling its fragment ability
+        :param ctx: the command context
+        :param channel: the voice channel to remove
+        """
+        channel_db: VoiceChannel = VoiceChannel.get_or_none(discord_id=channel.id)
+        if channel_db is None:
+            await ctx.send(f'Channel {channel.mention} is not a fragment channel',
+                           delete_after=self.message_delete_delay)
+            await ctx.message.delete(delay=self.message_delete_delay)
+            return
+
+        channel_db.delete_instance()
+        await ctx.send(f'Channel {channel.mention} is no longer a fragment channel',
+                       delete_after=self.message_delete_delay)
+        await ctx.message.delete(delay=self.message_delete_delay)
+
     @commands.command(help='Add text channel to the database')
     @commands.has_guild_permissions(**command_permissions)
     async def add_text(self, ctx: commands.Context, channel: discord.TextChannel):
@@ -102,6 +122,33 @@ class ChannelCog(commands.Cog, name='Channel Commands'):
                 print(f'\t\t\tChannel db: {voice_channel_db}')
 
         await ctx.send(f'Category {category.mention} added to db', delete_after=self.message_delete_delay)
+        await ctx.message.delete(delay=self.message_delete_delay)
+
+    @commands.command(aliases=['delete_category'], help='remove a channel category and the channels within it.')
+    @commands.has_guild_permissions(**command_permissions)
+    async def remove_category(self, ctx: commands.Context, category: discord.CategoryChannel):
+        """
+
+        :param ctx: the command context
+        :param category: the channel category to remove
+        """
+        category_db: ChannelCategory = ChannelCategory.get_or_none(discord_id=category.id)
+        if category_db is None:
+            await ctx.send(f'Category {category.mention} is not is not a fragment category',
+                           delete_after=self.message_delete_delay)
+            await ctx.message.delete(delay=self.message_delete_delay)
+            return
+
+        # delete text channels
+        TextChannel.delete().where(TextChannel.category == category_db).execute()
+        # delete voice channels
+        VoiceChannel.delete().where(VoiceChannel.category == category_db).execute()
+
+        # delete category
+        category_db.delete_instance()
+
+        await ctx.send(f'Category {category.mention} is no longer a fragment category',
+                       delete_after=self.message_delete_delay)
         await ctx.message.delete(delay=self.message_delete_delay)
 
     @commands.Cog.listener()
