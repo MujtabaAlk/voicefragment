@@ -10,7 +10,7 @@ from discord.ext import commands
 from dotenv import load_dotenv
 
 from channel_cog import ChannelCog
-from models import Guild, ChannelCategory, VoiceChannel, TextChannel
+from models import Guild
 
 
 def create_bot() -> commands.Bot:
@@ -52,8 +52,8 @@ def create_bot() -> commands.Bot:
             print(f'Guild {guild.name} was already in db.')
 
         await setup_message.delete(delay=5)
-        await ctx.send('Finished Initializing to Server', delete_after=5)
-        await ctx.message.delete(delay=5)
+        await ctx.send('Finished Initializing to Server', delete_after=10)
+        await ctx.message.delete(delay=10)
 
     # add the channel cog
     client.add_cog(ChannelCog(client))

@@ -25,7 +25,7 @@ class ChannelCog(commands.Cog, name='Channel Commands'):
     @commands.has_guild_permissions(**command_permissions)
     async def add_voice(self, ctx: commands.Context, channel: discord.VoiceChannel):
         """
-        Add the voice channel to the database making it a fragment channel.
+        Add the voice channel to the database enabling the fragment ability.
         :param ctx: the command context
         :param channel: the voice Channel to add
         """
@@ -68,7 +68,7 @@ class ChannelCog(commands.Cog, name='Channel Commands'):
     @commands.has_guild_permissions(**command_permissions)
     async def add_text(self, ctx: commands.Context, channel: discord.TextChannel):
         """
-        Add the text channel to the database.
+        Add the text channel to the database enabling the fragment ability.
         :param ctx: the command context
         :param channel: the text Channel to add
         """
@@ -88,9 +88,10 @@ class ChannelCog(commands.Cog, name='Channel Commands'):
             await ctx.message.delete(delay=self.message_delete_delay)
 
     @commands.command(help='add a channel category and the channels within it.')
+    @commands.has_guild_permissions(**command_permissions)
     async def add_category(self, ctx: commands.Context, category: discord.CategoryChannel):
         """
-        Add a channel category and the channels inside it.
+        Add a channel category and the channels inside it to the database enabling the fragment ability.
         :param ctx: the command context
         :param category: the channel category to add
         """
@@ -128,7 +129,7 @@ class ChannelCog(commands.Cog, name='Channel Commands'):
     @commands.has_guild_permissions(**command_permissions)
     async def remove_category(self, ctx: commands.Context, category: discord.CategoryChannel):
         """
-
+        Remove a category from the database disabling its fragment ability of channels inside it
         :param ctx: the command context
         :param category: the channel category to remove
         """
@@ -259,7 +260,12 @@ def _get_guild_and_category_db_or_false(guild: discord.Guild, category: discord.
     return guild_db, category_db, True
 
 
-async def _check_member_owns_channel(ctx: commands.Context):
+async def _check_member_owns_channel(ctx: commands.Context) -> discord.VoiceChannel:
+    """
+    checks if a member owns a channel or not and returns the channel if true.
+    :param ctx: the command context
+    :return: the owned voice channel or none
+    """
     channel_owner_db: ChannelOwner = ChannelOwner.get_or_none(discord_id=ctx.author.id)
     if channel_owner_db is None:
         print('no entry for member in database.')
