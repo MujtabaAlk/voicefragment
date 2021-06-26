@@ -152,6 +152,35 @@ class ChannelCog(commands.Cog, name='Channel Commands'):
                        delete_after=self.message_delete_delay)
         await ctx.message.delete(delay=self.message_delete_delay)
 
+    @commands.command(aliases=['display_voice', 'show_voice', 'list_fragment'],
+                      help='Display the voice channels with fragmentation enabled.')
+    @commands.has_guild_permissions(**command_permissions)
+    async def list_voice(self, ctx: commands.Context):
+        """
+        Displays a list of fragment enabled channels.
+        :param ctx: the command context
+        """
+        guild_db: Guild = Guild.get_or_none(discord_id=ctx.guild.id)
+        if guild_db is None:
+            await ctx.send('you must initialize bot in the server first', delete_after=self.message_delete_delay)
+            await ctx.message.delete(delay=self.message_delete_delay)
+            return
+
+        result_message: str = 'Fragment Channels:\n'
+        categories_db: list[ChannelCategory] = list(ChannelCategory.select().where(ChannelCategory.guild == guild_db))
+        for category_db in categories_db:
+            category: discord.CategoryChannel = discord.utils.find(lambda c: c.id == category_db.discord_id,
+                                                                   ctx.guild.categories)
+            result_message += f'{category.mention}\n'
+            voice_channels_db: list[VoiceChannel] = list(
+                VoiceChannel.select().where(VoiceChannel.category == category_db))
+            for voice_channel_db in voice_channels_db:
+                voice_channel: discord.VoiceChannel = discord.utils.find(lambda c: c.id == voice_channel_db.discord_id,
+                                                                         category.voice_channels)
+                result_message += f'\t{voice_channel.mention}\n'
+
+        await ctx.send(result_message)
+
     @commands.Cog.listener()
     async def on_voice_state_update(self, member: discord.Member,
                                     before: discord.VoiceState,
