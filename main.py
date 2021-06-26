@@ -2,6 +2,7 @@
 This is the main entry point for the program.
 """
 __author__ = "Mojtaba Alkhalifah"
+__author_desc__ = "A humble graduate from King Fahd University of Petroleum and Minerals."
 
 import os
 
@@ -31,11 +32,12 @@ def create_bot() -> commands.Bot:
 
     @client.event
     async def on_ready():
-        guild: discord.Guild = discord.utils.get(client.guilds, name=guild_name)
-
         print(f'{client.user.name} has connected to Discord!')
-        if guild is not None:
-            print(f'Bot is connected to server "{guild.name}".')
+
+        print('Bot is connected to server/s:')
+        guild: discord.Guild
+        for guild in client.guilds:
+            print(f'\t"{guild.name}"')
 
     @client.command(name='init', aliases=['setup'], help='Initialize the bot to this server.')
     @commands.has_guild_permissions(**command_permissions)
@@ -51,7 +53,7 @@ def create_bot() -> commands.Bot:
         else:
             print(f'Guild {guild.name} was already in db.')
 
-        await setup_message.delete(delay=5)
+        await setup_message.delete(delay=10)
         await ctx.send('Finished Initializing to Server', delete_after=10)
         await ctx.message.delete(delay=10)
 

@@ -38,10 +38,10 @@ class ChannelCog(commands.Cog, name='Channel Commands'):
         channel_db, created = VoiceChannel.get_or_create(discord_id=channel.id, defaults=dict(
             name=channel.name, guild=guild_db, category=category_db))
         if created:
-            await ctx.send('Channel added to db', delete_after=self.message_delete_delay)
+            await ctx.send(f'Channel {channel.mention} is now a fragment channel', delete_after=self.message_delete_delay)
             await ctx.message.delete(delay=self.message_delete_delay)
         else:
-            await ctx.send('Channel already in db', delete_after=self.message_delete_delay)
+            await ctx.send(f'Channel {channel.mention} is already a fragment channel', delete_after=self.message_delete_delay)
             await ctx.message.delete(delay=self.message_delete_delay)
 
     @commands.command(aliases=['delete_voice'], help='Remove a voice channel from the database')
@@ -88,7 +88,7 @@ class ChannelCog(commands.Cog, name='Channel Commands'):
                     name=channel.name, guild=guild_db, category=category_db))
                 print(f'\t\t\tChannel db: {voice_channel_db}')
 
-        await ctx.send(f'Category {category.mention} added to db', delete_after=self.message_delete_delay)
+        await ctx.send(f'Channels in category {category.mention} are now fragment channels', delete_after=self.message_delete_delay)
         await ctx.message.delete(delay=self.message_delete_delay)
 
     @commands.command(aliases=['delete_category'], help='remove a channel category and the channels within it.')
@@ -112,7 +112,7 @@ class ChannelCog(commands.Cog, name='Channel Commands'):
         # delete category
         category_db.delete_instance()
 
-        await ctx.send(f'Category {category.mention} is no longer a fragment category',
+        await ctx.send(f'Channels in category {category.mention} are no longer a fragment channels',
                        delete_after=self.message_delete_delay)
         await ctx.message.delete(delay=self.message_delete_delay)
 
