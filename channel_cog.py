@@ -6,7 +6,7 @@ import asyncio
 import discord
 from discord.ext import commands
 
-from models import Guild, ChannelCategory, VoiceChannel, TextChannel, ChannelOwner
+from models import Guild, ChannelCategory, VoiceChannel, ChannelOwner
 
 
 class ChannelCog(commands.Cog, name='Channel Commands'):
@@ -64,29 +64,6 @@ class ChannelCog(commands.Cog, name='Channel Commands'):
                        delete_after=self.message_delete_delay)
         await ctx.message.delete(delay=self.message_delete_delay)
 
-    @commands.command(help='Add text channel to the database')
-    @commands.has_guild_permissions(**command_permissions)
-    async def add_text(self, ctx: commands.Context, channel: discord.TextChannel):
-        """
-        Add the text channel to the database enabling the fragment ability.
-        :param ctx: the command context
-        :param channel: the text Channel to add
-        """
-        guild_db, category_db, bot_init = _get_guild_and_category_db_or_false(ctx.guild, channel.category)
-        if not bot_init:
-            await ctx.send('you must initialize bot in the server first')
-            return
-
-        channel_db: TextChannel
-        channel_db, created = TextChannel.get_or_create(discord_id=channel.id, defaults=dict(
-            name=channel.name, guild=guild_db, category=category_db))
-        if created:
-            await ctx.send('Channel added to db', delete_after=self.message_delete_delay)
-            await ctx.message.delete(delay=self.message_delete_delay)
-        else:
-            await ctx.send('Channel already in db', delete_after=self.message_delete_delay)
-            await ctx.message.delete(delay=self.message_delete_delay)
-
     @commands.command(help='add a channel category and the channels within it.')
     @commands.has_guild_permissions(**command_permissions)
     async def add_category(self, ctx: commands.Context, category: discord.CategoryChannel):
@@ -99,17 +76,6 @@ class ChannelCog(commands.Cog, name='Channel Commands'):
         if not bot_init:
             await ctx.send('you must initialize bot in the server first')
             return
-
-        text_channels: list[discord.TextChannel] = category.text_channels
-        if len(text_channels) > 0:
-            print('\t\tText channels:')
-            for channel in text_channels:
-                print(f'\t\t\tChannel: {channel}')
-                # get text channel object from database if it exists otherwise insert into database
-                text_channel_db: TextChannel
-                text_channel_db, _ = TextChannel.get_or_create(discord_id=channel.id, defaults=dict(
-                    name=channel.name, guild=guild_db, category=category_db))
-                print(f'\t\t\tChannel db: {text_channel_db}')
 
         voice_channels: list[discord.VoiceChannel] = category.voice_channels
         if len(voice_channels) > 0:
@@ -140,8 +106,6 @@ class ChannelCog(commands.Cog, name='Channel Commands'):
             await ctx.message.delete(delay=self.message_delete_delay)
             return
 
-        # delete text channels
-        TextChannel.delete().where(TextChannel.category == category_db).execute()
         # delete voice channels
         VoiceChannel.delete().where(VoiceChannel.category == category_db).execute()
 

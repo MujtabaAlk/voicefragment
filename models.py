@@ -56,20 +56,6 @@ class VoiceChannel(BaseModel):
         table_name = 'voice_channel'
 
 
-class TextChannel(BaseModel):
-    """
-    A class representing a Discord text channel.
-    """
-    id = AutoField()
-    discord_id = IntegerField(unique=True)
-    name = CharField()
-    guild = ForeignKeyField(Guild, backref='text_channel')
-    category = ForeignKeyField(ChannelCategory, backref='text_channel')
-
-    class Meta:
-        table_name = 'text_channel'
-
-
 class ChannelOwner(BaseModel):
     """
     A class representing a Discord member and the channel they own.
