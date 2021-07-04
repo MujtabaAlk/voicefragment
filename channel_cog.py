@@ -2,6 +2,8 @@
 This module contains the discord cog for managing channels
 """
 import asyncio
+from typing import Optional
+from uuid import uuid4, UUID
 
 import discord
 from discord.ext import commands
@@ -38,10 +40,12 @@ class ChannelCog(commands.Cog, name='Channel Commands'):
         channel_db, created = VoiceChannel.get_or_create(discord_id=channel.id, defaults=dict(
             name=channel.name, guild=guild_db, category=category_db))
         if created:
-            await ctx.send(f'Channel {channel.mention} is now a fragment channel', delete_after=self.message_delete_delay)
+            await ctx.send(f'Channel {channel.mention} is now a fragment channel',
+                           delete_after=self.message_delete_delay)
             await ctx.message.delete(delay=self.message_delete_delay)
         else:
-            await ctx.send(f'Channel {channel.mention} is already a fragment channel', delete_after=self.message_delete_delay)
+            await ctx.send(f'Channel {channel.mention} is already a fragment channel',
+                           delete_after=self.message_delete_delay)
             await ctx.message.delete(delay=self.message_delete_delay)
 
     @commands.command(aliases=['delete_voice'], help='Remove a voice channel from the database')
@@ -88,7 +92,8 @@ class ChannelCog(commands.Cog, name='Channel Commands'):
                     name=channel.name, guild=guild_db, category=category_db))
                 print(f'\t\t\tChannel db: {voice_channel_db}')
 
-        await ctx.send(f'Channels in category {category.mention} are now fragment channels', delete_after=self.message_delete_delay)
+        await ctx.send(f'Channels in category {category.mention} are now fragment channels',
+                       delete_after=self.message_delete_delay)
         await ctx.message.delete(delay=self.message_delete_delay)
 
     @commands.command(aliases=['delete_category'], help='remove a channel category and the channels within it.')
@@ -116,7 +121,7 @@ class ChannelCog(commands.Cog, name='Channel Commands'):
                        delete_after=self.message_delete_delay)
         await ctx.message.delete(delay=self.message_delete_delay)
 
-    @commands.command(aliases=['display_voice', 'show_voice', 'list_fragment'],
+    @commands.command(aliases=['display_voice', 'show_voice', 'list_fragment', 'voice_list'],
                       help='Display the voice channels with fragmentation enabled.')
     @commands.has_guild_permissions(**command_permissions)
     async def list_voice(self, ctx: commands.Context):
@@ -168,7 +173,8 @@ class ChannelCog(commands.Cog, name='Channel Commands'):
                 print(f'Channel is in the database: {channel_db}')
                 guild: discord.Guild = after.channel.guild
                 category: discord.CategoryChannel = after.channel.category
-                temp_channel_name = after.channel.name + " temp"
+                temp_channel_uuid: UUID = uuid4()
+                temp_channel_name = after.channel.name + " fragment: " + str(temp_channel_uuid)
                 temp_voice_channel: discord.VoiceChannel = await guild.create_voice_channel(name=temp_channel_name,
                                                                                             category=category)
                 await member.move_to(temp_voice_channel)
@@ -246,14 +252,14 @@ def _get_guild_and_category_db_or_false(guild: discord.Guild, category: discord.
     guild_db: Guild = Guild.get_or_none(discord_id=guild.id)
     if guild_db is None:
         return None, None, False
+    category_db: ChannelCategory
     category_db, _ = ChannelCategory.get_or_create(discord_id=category.id, defaults=dict(
         name=category.name, guild=guild_db))
-    category_db: ChannelCategory
 
     return guild_db, category_db, True
 
 
-async def _check_member_owns_channel(ctx: commands.Context) -> discord.VoiceChannel:
+async def _check_member_owns_channel(ctx: commands.Context) -> Optional[discord.VoiceChannel]:
     """
     checks if a member owns a channel or not and returns the channel if true.
     :param ctx: the command context

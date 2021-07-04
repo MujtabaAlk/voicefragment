@@ -19,7 +19,6 @@ def create_bot() -> commands.Bot:
     Create an instance of the bot and adds commands and Cogs
     :return: The created Discord bot instance
     """
-    guild_name = os.getenv('GUILD_NAME')
     command_permissions = dict(manage_guild=True,
                                manage_channels=True,
                                manage_messages=True,
