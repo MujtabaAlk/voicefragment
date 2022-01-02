@@ -4,7 +4,10 @@ This is the main entry point for the program.
 __author__ = "Mojtaba Alkhalifah"
 __author_desc__ = "A humble graduate from King Fahd University of Petroleum and Minerals."
 
+from datetime import datetime
+import logging
 import os
+import pathlib
 
 import discord
 from discord.ext import commands
@@ -14,11 +17,38 @@ from channel_cog import ChannelCog
 from models import Guild
 
 
+def setup_logger():
+    """
+    set up the applications logger and adds the handlers to it.
+    """
+    # create log directory if it does not exist
+    pathlib.Path("./logs").mkdir(exist_ok=True)
+
+    logger_name = "VoiceFragment"
+
+    logging_formatter = logging.Formatter("[%(asctime)s] [%(levelname)s] [%(filename)s:%(lineno)d] %(message)s")
+
+    stream_handler = logging.StreamHandler()
+    dt_log_file_str = datetime.now().strftime("%Y-%m-%dT%H-%M-%S")
+    file_handler = logging.FileHandler(f"logs/log_{dt_log_file_str}.log", mode="w")
+    stream_handler.setFormatter(logging_formatter)
+    file_handler.setFormatter(logging_formatter)
+
+    logger = logging.getLogger(logger_name)
+    logger.setLevel(logging.DEBUG)
+    logger.addHandler(stream_handler)
+    logger.addHandler(file_handler)
+
+    logger.info("logger is set up")
+
+
 def create_bot() -> commands.Bot:
     """
     Create an instance of the bot and adds commands and Cogs
     :return: The created Discord bot instance
     """
+    logger_name = "VoiceFragment"
+    logger = logging.getLogger(logger_name)
     command_permissions = dict(manage_guild=True,
                                manage_channels=True,
                                manage_messages=True,
@@ -31,12 +61,12 @@ def create_bot() -> commands.Bot:
 
     @client.event
     async def on_ready():
-        print(f'{client.user.name} has connected to Discord!')
+        logger.info(f'{client.user.name} has connected to Discord!')
 
-        print('Bot is connected to server/s:')
+        logger.info('Bot is connected to server/s:')
         guild: discord.Guild
         for guild in client.guilds:
-            print(f'\t"{guild.name}"')
+            logger.info(f'\t"{guild.name}"')
 
     @client.command(name='init', aliases=['setup'], help='Initialize the bot to this server.')
     @commands.has_guild_permissions(**command_permissions)
@@ -48,9 +78,9 @@ def create_bot() -> commands.Bot:
         guild_db: Guild
         guild_db, created, *_ = Guild.get_or_create(discord_id=guild.id, defaults=dict(name=guild.name))
         if created:
-            print(f'Guild {guild.name} was added to db.')
+            logger.info(f'Guild {guild.name} was added to db.')
         else:
-            print(f'Guild {guild.name} was already in db.')
+            logger.info(f'Guild {guild.name} was already in db.')
 
         await setup_message.delete(delay=10)
         await ctx.send('Finished Initializing to Server', delete_after=10)
@@ -66,6 +96,8 @@ def main():
     """
     Main function of module.
     """
+    setup_logger()
+
     bot = create_bot()
     token = os.getenv('DISCORD_TOKEN')
     bot.run(token)
