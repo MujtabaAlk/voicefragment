@@ -57,8 +57,7 @@ def create_bot() -> commands.Bot:
         guild: discord.Guild = ctx.guild
 
         # get guild object from database if it exists otherwise insert into database
-        guild_db: Guild
-        guild_db, created, *_ = Guild.get_or_create(
+        _, created, *_ = Guild.get_or_create(
             discord_id=guild.id, defaults=dict(name=guild.name)
         )
         if created:

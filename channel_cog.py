@@ -41,8 +41,7 @@ class ChannelCog(commands.Cog, name="Channel Commands"):  # type: ignore[call-ar
             await ctx.send("you must initialize bot in the server first")
             return
 
-        channel_db: VoiceChannel
-        channel_db, created = VoiceChannel.get_or_create(
+        _, created = VoiceChannel.get_or_create(
             discord_id=channel.id,
             defaults=dict(
                 name=channel.name, guild=guild_db, category=category_db
@@ -100,7 +99,8 @@ class ChannelCog(commands.Cog, name="Channel Commands"):  # type: ignore[call-ar
         self, ctx: commands.Context, category: discord.CategoryChannel
     ):
         """
-        Add a channel category and the channels inside it to the database enabling the fragment ability.
+        Add a channel category and the channels inside it to the database
+        enabling the fragment ability.
         :param ctx: the command context
         :param category: the channel category to add
         """
@@ -195,7 +195,7 @@ class ChannelCog(commands.Cog, name="Channel Commands"):  # type: ignore[call-ar
         )
         for category_db in categories_db:
             category: discord.CategoryChannel = discord.utils.find(
-                lambda c: c.id == category_db.discord_id, ctx.guild.categories
+                lambda c, ct=category_db: c.id == ct.discord_id, ctx.guild.categories
             )
             result_message += f"{category.mention}\n"
             voice_channels_db: list[VoiceChannel] = list(
@@ -205,7 +205,7 @@ class ChannelCog(commands.Cog, name="Channel Commands"):  # type: ignore[call-ar
             )
             for voice_channel_db in voice_channels_db:
                 voice_channel: discord.VoiceChannel = discord.utils.find(
-                    lambda c: c.id == voice_channel_db.discord_id,
+                    lambda c, ct=voice_channel_db: c.id == ct.discord_id,
                     category.voice_channels,
                 )
                 result_message += f"\t{voice_channel.mention}\n"
@@ -216,7 +216,7 @@ class ChannelCog(commands.Cog, name="Channel Commands"):  # type: ignore[call-ar
     async def on_voice_state_update(
         self,
         member: discord.Member,
-        before: discord.VoiceState,
+        before: discord.VoiceState,  # pylint: disable=unused-argument
         after: discord.VoiceState,
     ):
         """
@@ -254,7 +254,7 @@ class ChannelCog(commands.Cog, name="Channel Commands"):  # type: ignore[call-ar
                     discord_id=member.id, channel_id=temp_voice_channel.id
                 )
 
-                def wait_to_empty(m, b, a):
+                def wait_to_empty(m, b, a):  # pylint: disable=[unused-argument, invalid-name]
                     if len(temp_voice_channel.members) == 0:
                         return True
                     if m.id == member.id and a.channel != temp_voice_channel:
@@ -360,7 +360,7 @@ async def _check_member_owns_channel(
     if channel_owner_db is None:
         print("no entry for member in database.")
         await ctx.send(
-            f"You do not control a channel.",
+            "You do not control a channel.",
             delete_after=ChannelCog.message_delete_delay,
         )
         await ctx.message.delete(delay=ChannelCog.message_delete_delay)
@@ -372,7 +372,7 @@ async def _check_member_owns_channel(
     if owned_voice_channel is None:
         print("Channel not found in guild.")
         await ctx.send(
-            f"You do not control a channel.",
+            "You do not control a channel.",
             delete_after=ChannelCog.message_delete_delay,
         )
         await ctx.message.delete(delay=ChannelCog.message_delete_delay)

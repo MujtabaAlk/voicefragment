@@ -1,2 +1,3 @@
 black==21.12b0
 mypy==0.930
+pylint==2.12.2
