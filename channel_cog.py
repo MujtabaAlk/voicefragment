@@ -2,6 +2,7 @@
 This module contains the discord cog for managing channels
 """
 import asyncio
+import logging
 from typing import Optional
 from uuid import uuid4, UUID
 
@@ -22,6 +23,8 @@ class ChannelCog(commands.Cog, name='Channel Commands'):
 
     def __init__(self, bot: commands.Bot):
         self.bot = bot
+        logger_name = "VoiceFragment"
+        self.logger = logging.getLogger(logger_name)
 
     @commands.command(help='Add voice channel to the database')
     @commands.has_guild_permissions(**command_permissions)
@@ -31,7 +34,7 @@ class ChannelCog(commands.Cog, name='Channel Commands'):
         :param ctx: the command context
         :param channel: the voice Channel to add
         """
-        guild_db, category_db, bot_init = _get_guild_and_category_db_or_false(ctx.guild, channel.category)
+        guild_db, category_db, bot_init = self._get_guild_and_category_db_or_false(ctx.guild, channel.category)
         if not bot_init:
             await ctx.send('you must initialize bot in the server first')
             return
@@ -76,21 +79,21 @@ class ChannelCog(commands.Cog, name='Channel Commands'):
         :param ctx: the command context
         :param category: the channel category to add
         """
-        guild_db, category_db, bot_init = _get_guild_and_category_db_or_false(ctx.guild, category)
+        guild_db, category_db, bot_init = self._get_guild_and_category_db_or_false(ctx.guild, category)
         if not bot_init:
             await ctx.send('you must initialize bot in the server first')
             return
 
         voice_channels: list[discord.VoiceChannel] = category.voice_channels
         if len(voice_channels) > 0:
-            print('\t\tVoice channels:')
+            self.logger.info('\t\tVoice channels:')
             for channel in voice_channels:
-                print(f'\t\t\tChannel: {channel}')
+                self.logger.info(f'\t\t\tChannel: {channel}')
                 # get voice channel object from database if it exists otherwise insert into database
                 voice_channel_db: VoiceChannel
                 voice_channel_db, _ = VoiceChannel.get_or_create(discord_id=channel.id, defaults=dict(
                     name=channel.name, guild=guild_db, category=category_db))
-                print(f'\t\t\tChannel db: {voice_channel_db}')
+                self.logger.info(f'\t\t\tChannel db: {voice_channel_db}')
 
         await ctx.send(f'Channels in category {category.mention} are now fragment channels',
                        delete_after=self.message_delete_delay)
@@ -165,12 +168,12 @@ class ChannelCog(commands.Cog, name='Channel Commands'):
         """
         if after.channel is not None:
             if after.channel == member.guild.afk_channel:
-                print('Entered AFK Channel!')
+                self.logger.info('Entered AFK Channel!')
                 return
-            print(f'Connected to voice Channel: {after.channel}')
+            self.logger.info(f'Connected to voice Channel: {after.channel}')
             channel_db: VoiceChannel = VoiceChannel.get_or_none(discord_id=after.channel.id)
             if channel_db is not None:
-                print(f'Channel is in the database: {channel_db}')
+                self.logger.info(f'Channel is in the database: {channel_db}')
                 guild: discord.Guild = after.channel.guild
                 category: discord.CategoryChannel = after.channel.category
                 temp_channel_uuid: UUID = uuid4()
@@ -195,12 +198,12 @@ class ChannelCog(commands.Cog, name='Channel Commands'):
                 await temp_voice_channel.delete()
                 channel_owner_db.delete_instance()
                 await asyncio.sleep(5)
-                print('Channel Deleted...')
+                self.logger.info('Channel Deleted...')
 
             else:
-                print('Channel is not in the database')
+                self.logger.info('Channel is not in the database')
         else:
-            print('Disconnected from voice channels')
+            self.logger.info('Disconnected from voice channels')
 
     @commands.command(help='Change voice channel limit')
     async def voice_limit(self, ctx: commands.Context, limit: int):
@@ -209,13 +212,13 @@ class ChannelCog(commands.Cog, name='Channel Commands'):
         :param ctx: the command context
         :param limit: new channel user limit
         """
-        channel: discord.VoiceChannel = await _check_member_owns_channel(ctx)
+        channel: discord.VoiceChannel = await self._check_member_owns_channel(ctx)
         if channel is None:
             return
 
-        print(f'Changing {channel.name} limit to from: {channel.user_limit}, to: {limit}')
+        self.logger.info(f'Changing {channel.name} limit to from: {channel.user_limit}, to: {limit}')
         await channel.edit(user_limit=limit)
-        print(f'new limit: {channel.user_limit}')
+        self.logger.info(f'new limit: {channel.user_limit}')
         await ctx.send(f'{channel.mention} limit changed to {limit if limit > 0 else "no limit"}',
                        delete_after=self.message_delete_delay)
         await ctx.message.delete(delay=self.message_delete_delay)
@@ -227,57 +230,56 @@ class ChannelCog(commands.Cog, name='Channel Commands'):
         :param ctx: the command context
         :param new_name: new channel name
         """
-        channel: discord.VoiceChannel = await _check_member_owns_channel(ctx)
+        channel: discord.VoiceChannel = await self._check_member_owns_channel(ctx)
         if channel is None:
             return
 
-        print(f'Changing {channel.name} name to: {new_name}')
+        self.logger.info(f'Changing {channel.name} name to: {new_name}')
         await channel.edit(name=new_name)
-        print(f'new name: {channel.name}')
+        self.logger.info(f'new name: {channel.name}')
         await ctx.send(f'{channel.mention} name changed', delete_after=self.message_delete_delay)
         await ctx.message.delete(delay=self.message_delete_delay)
 
+    @staticmethod
+    def _get_guild_and_category_db_or_false(guild: discord.Guild, category: discord.CategoryChannel) \
+            -> (Guild, ChannelCategory, bool):
+        """
+        check if the bot is initialized by checking if guild is in the database,
+        and get or add the channel category to the database.
+        :param guild: the discord guild object
+        :param category: the discord channel category object
+        :returns:(Guild: guild database object,
+                ChannelCategory: category database object,
+                bool: boolean true if bot has been initialized)
+        """
+        guild_db: Guild = Guild.get_or_none(discord_id=guild.id)
+        if guild_db is None:
+            return None, None, False
+        category_db: ChannelCategory
+        category_db, _ = ChannelCategory.get_or_create(discord_id=category.id, defaults=dict(
+            name=category.name, guild=guild_db))
 
-def _get_guild_and_category_db_or_false(guild: discord.Guild, category: discord.CategoryChannel) \
-        -> (Guild, ChannelCategory, bool):
-    """
-    check if the bot is initialized by checking if guild is in the database,
-    and get or add the channel category to the database.
-    :param guild: the discord guild object
-    :param category: the discord channel category object
-    :returns:(Guild: guild database object,
-            ChannelCategory: category database object,
-            bool: boolean true if bot has been initialized)
-    """
-    guild_db: Guild = Guild.get_or_none(discord_id=guild.id)
-    if guild_db is None:
-        return None, None, False
-    category_db: ChannelCategory
-    category_db, _ = ChannelCategory.get_or_create(discord_id=category.id, defaults=dict(
-        name=category.name, guild=guild_db))
+        return guild_db, category_db, True
 
-    return guild_db, category_db, True
+    async def _check_member_owns_channel(self, ctx: commands.Context) -> Optional[discord.VoiceChannel]:
+        """
+        checks if a member owns a channel or not and returns the channel if true.
+        :param ctx: the command context
+        :return: the owned voice channel or none
+        """
+        channel_owner_db: ChannelOwner = ChannelOwner.get_or_none(discord_id=ctx.author.id)
+        if channel_owner_db is None:
+            self.logger.info('no entry for member in database.')
+            await ctx.send(f'You do not control a channel.', delete_after=ChannelCog.message_delete_delay)
+            await ctx.message.delete(delay=ChannelCog.message_delete_delay)
+            return None
 
+        owned_voice_channel: discord.VoiceChannel = discord.utils.find(lambda c: c.id == channel_owner_db.channel_id,
+                                                                       ctx.guild.voice_channels)
+        if owned_voice_channel is None:
+            self.logger.info('Channel not found in guild.')
+            await ctx.send(f'You do not control a channel.', delete_after=ChannelCog.message_delete_delay)
+            await ctx.message.delete(delay=ChannelCog.message_delete_delay)
+            return None
 
-async def _check_member_owns_channel(ctx: commands.Context) -> Optional[discord.VoiceChannel]:
-    """
-    checks if a member owns a channel or not and returns the channel if true.
-    :param ctx: the command context
-    :return: the owned voice channel or none
-    """
-    channel_owner_db: ChannelOwner = ChannelOwner.get_or_none(discord_id=ctx.author.id)
-    if channel_owner_db is None:
-        print('no entry for member in database.')
-        await ctx.send(f'You do not control a channel.', delete_after=ChannelCog.message_delete_delay)
-        await ctx.message.delete(delay=ChannelCog.message_delete_delay)
-        return None
-
-    owned_voice_channel: discord.VoiceChannel = discord.utils.find(lambda c: c.id == channel_owner_db.channel_id,
-                                                                   ctx.guild.voice_channels)
-    if owned_voice_channel is None:
-        print('Channel not found in guild.')
-        await ctx.send(f'You do not control a channel.', delete_after=ChannelCog.message_delete_delay)
-        await ctx.message.delete(delay=ChannelCog.message_delete_delay)
-        return None
-
-    return owned_voice_channel
+        return owned_voice_channel
