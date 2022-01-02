@@ -2,7 +2,7 @@
 This module contains the discord cog for managing channels
 """
 import asyncio
-from typing import Optional
+from typing import Optional, Tuple
 from uuid import uuid4, UUID
 
 import discord
@@ -11,7 +11,7 @@ from discord.ext import commands
 from models import Guild, ChannelCategory, VoiceChannel, ChannelOwner
 
 
-class ChannelCog(commands.Cog, name="Channel Commands"):
+class ChannelCog(commands.Cog, name="Channel Commands"):  # type: ignore[call-arg]
     """
     A command Cog that handles functionalities related to channels
     """
@@ -324,7 +324,7 @@ class ChannelCog(commands.Cog, name="Channel Commands"):
 
 def _get_guild_and_category_db_or_false(
     guild: discord.Guild, category: discord.CategoryChannel
-) -> (Guild, ChannelCategory, bool):
+) -> Tuple[Optional[Guild], Optional[ChannelCategory], bool]:
     """
     check if the bot is initialized by checking if guild is in the database,
     and get or add the channel category to the database.
