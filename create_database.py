@@ -9,10 +9,10 @@ def main():
     Main function of module.
     """
     tables = [Guild, ChannelCategory, VoiceChannel, ChannelOwner]
-    print('Creating Tables...')
+    print("Creating Tables...")
     database.create_tables(tables)
-    print('Database initialized.')
+    print("Database initialized.")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
