@@ -41,10 +41,10 @@ Follow these instructions once the bot is running/deployed:
 
 | Command                        | Description                                                  | Example                                         |
 |--------------------------------|--------------------------------------------------------------|-------------------------------------------------|
-| !add_voice <#channelID>        | enables fragment ability on the voice channel                | !add_voice <#channelID>                         |
-| !remove_voice <#channelID>     | disables fragment ability on the voice channel               | !remove_voice <#channelID>                      |
-| !add_category <#categoryID>    | enables fragment ability on all voice channel in a category  | !add_category <#categoryID>                     |
-| !remove_category <#categoryID> | disables fragment ability on all voice channel in a category | !remove_category <#categoryID>                  |
+| !add_voice <#channelID>        | enables fragment ability on the voice channel                | !add_voice <#724723778547989516>                |
+| !remove_voice <#channelID>     | disables fragment ability on the voice channel               | !remove_voice <#724723778547989516>             |
+| !add_category <#categoryID>    | enables fragment ability on all voice channel in a category  | !add_category <#723724768043687501>             |
+| !remove_category <#categoryID> | disables fragment ability on all voice channel in a category | !remove_category <#723724768043687501>          |
 | !list_voice                    | displays a list of fragment enabled channels                 | !voice_list                                     |
 | !voice_limit n                 | changes the user limit of the voice channel to n users       | !voice_limit 5                                  |
 | !voice_name  NewName           | changes the name of the voice channel                        | !voice_name ChannelA or !voice_name "Channel A" |
